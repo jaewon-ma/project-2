@@ -32,14 +32,21 @@
       <span id="online"></span>
     </header>
 
-    <!-- Later: the fake Blender image goes here, with the expert's stick
-         figure and the novice's clickable buttons drawn on top of it. -->
+    <!-- The fake Blender screen. Everything drawn on top of it (buttons,
+         highlights, the stick figure) lives in one SVG that uses the
+         image's own 1920x1080 pixel coordinates, so both users see the
+         same thing at any window size. -->
     <div id="stage">
-      <div id="led"></div>
-      <button id="led-button">Toggle LED</button>
-      <p id="last-changed"></p>
+      <svg id="overlay" viewBox="0 0 1920 1080">
+        <g id="hotspots"></g>
+        <g id="highlight-layer"></g>
+        <g id="pointer-layer"></g>
+        <g id="avatar-layer"></g>
+      </svg>
     </div>
 
+    <p id="help"></p>
+    <p id="activity"></p>
     <p id="error" class="error"></p>
   </section>
 
