@@ -180,6 +180,41 @@ header {
 .bubble.puzzled  { fill: #ffd500; }
 .bubble.panicked { fill: #ff5566; }
 
+#chat {
+  display: flex;
+  gap: 8px;
+  max-width: 600px;
+  margin: 10px auto 0;
+}
+
+#chat[hidden] {
+  display: none;
+}
+
+#chat input {
+  flex: 1;
+  width: auto;
+  text-align: left;
+  text-transform: none;
+}
+
+#chat button {
+  margin: 0;
+}
+
+/* Speech bubble that comes out of Cubey */
+.speech rect, .speech path {
+  fill: #ffffff;
+  stroke: #5b1a9e;
+  stroke-width: 4;
+  stroke-linejoin: round;
+}
+
+.speech text {
+  font: 600 30px system-ui, sans-serif;
+  fill: #2b0a4f;
+}
+
 #help {
   color: #aaa;
   margin: 10px 0 0;

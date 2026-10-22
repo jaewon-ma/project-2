@@ -4,7 +4,7 @@ A proof of concept where an **expert** and a **novice** share one hand-drawn
 Blender screen. The novice clicks buttons on it as if using Blender. The expert
 can't press buttons. Instead they guide the novice through **Cubey**, a small
 cube-shaped avatar (from our design report) that walks around, points, highlights
-buttons, and shows emotions.
+buttons, shows emotions, and talks in speech bubbles.
 
 **Live site:** https://jaewon-ma.github.io/project-2/
 
@@ -24,6 +24,7 @@ buttons, and shows emotions.
 | Left-click anywhere | Points at that spot (dashed line + ping). Left-click again to stop pointing |
 | Right-click a button | Highlights it with a yellow glow. Right-click it again, or empty space, to clear |
 | `1` / `2` / `3` | Happy / puzzled / panicked. Press the same key again to go back to neutral |
+| Message box under the screen (Enter to jump to it) | Cubey says it in a speech bubble for a few seconds. Both users see it |
 
 **Novice controls:** click buttons on the screen. Only a few work, as a proof of
 concept: the **Select**, **Move**, and **Rotate** tools; the **Add** menu; **Camera**,
@@ -64,6 +65,7 @@ WebRTC library loaded from a CDN.
   | `point_at`        |   ✓    |        |
   | `highlight`       |   ✓    |        |
   | `set_emotion`     |   ✓    |        |
+  | `say`             |   ✓    |        |
   | `press_ui_button` |        |   ✓    |
 
   There is no login. Each user just says which role they are when they join.
