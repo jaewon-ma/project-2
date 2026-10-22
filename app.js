@@ -24,7 +24,7 @@ const SCREEN_H = 1080;
 
 const PERMISSIONS = {
   expert: new Set(["move_avatar", "point_at", "highlight", "set_emotion", "say"]),
-  novice: new Set(["press_ui_button"]),
+  novice: new Set(["press_ui_button", "say"]),
 };
 
 function can(role, action) {
@@ -69,7 +69,8 @@ let state = {
   highlighted: null, // id of the hotspot the expert highlighted, or null
   active: { tool: "tool_select", object: "Cube" },
   last_press: null, // { id, n } most recent novice click; n counts up so everyone can flash it
-  speech: null, // { text, n } latest thing Cubey said; n counts up so a repeated message shows again
+  // Latest chat message from each person, as { text, n }; n counts up so a repeated message shows again
+  speech: { expert: null, novice: null },
 };
 
 // ---- Action handlers (run on the expert's browser only) -----------------
@@ -103,7 +104,7 @@ const HANDLERS = {
   say(role, msg) {
     const text = String(msg.text ?? "").trim().slice(0, 140);
     if (!text) throw new Error("Type a message first.");
-    state.speech = { text, n: (state.speech?.n ?? 0) + 1 };
+    state.speech[role] = { text, n: (state.speech[role]?.n ?? 0) + 1 };
   },
 
   press_ui_button(role, msg) {
@@ -271,7 +272,7 @@ function showWorkspace(code) {
   document.getElementById("help").textContent =
     myRole === "expert"
       ? "WASD / arrows: walk · Left-click: point / stop pointing · Right-click a button: highlight · 1 happy · 2 puzzled · 3 panicked · Enter: talk"
-      : "Use the Blender screen like normal. Watch Cubey for hints.";
+      : "Use the Blender screen like normal. Watch Cubey for hints. · Enter: talk";
 
   const layer = document.getElementById("hotspots");
   for (const h of HOTSPOTS) {
@@ -280,12 +281,11 @@ function showWorkspace(code) {
     svg("title", {}, r).textContent = h.label;
   }
   buildAvatar();
-  if (myRole === "expert") document.getElementById("chat").hidden = false;
+  setUpChat();
   requestAnimationFrame(animate);
 }
 
 let lastPressSeen = 0;
-let speechSeen = 0;
 
 function render(msg) {
   state = msg.state;
@@ -311,9 +311,12 @@ function render(msg) {
       `Novice clicked ${HOTSPOT_BY_ID[press.id].label}${hint}`;
   }
 
-  if (state.speech && state.speech.n !== speechSeen) {
-    speechSeen = state.speech.n;
-    showSpeech(state.speech.text);
+  for (const role of ["expert", "novice"]) {
+    const said = state.speech[role];
+    if (said && said.n !== bubbles[role].seen) {
+      bubbles[role].seen = said.n;
+      showSpeech(role, said.text);
+    }
   }
 
   const hl = document.getElementById("highlight-layer");
@@ -406,7 +409,8 @@ function buildAvatar() {
 
   avatar.bubble = svg("text", { class: "bubble", x: 0, y: -150 }, root);
 
-  avatar.speech = svg("g", { class: "speech" }, layer);
+  bubbles.expert.g = svg("g", { class: "speech" }, layer);
+  bubbles.novice.g = svg("g", { class: "speech novice-speech" }, layer);
 
   // Pointing: a dashed line from Cubey's hand to the target, and a ping there
   const pl = document.getElementById("pointer-layer");
@@ -487,15 +491,20 @@ function animate(now) {
   requestAnimationFrame(animate);
 }
 
-// ---- Speech bubble ---------------------------------------------------------
-// Drawn above Cubey's head so it doesn't jump around when Cubey turns (or
-// under its feet when Cubey is at the very top of the screen). It stays up
-// for a few seconds depending on how long the message is.
+// ---- Speech bubbles --------------------------------------------------------
+// The expert talks through Cubey: their bubble is drawn above Cubey's head so
+// it doesn't jump around when Cubey turns (or under its feet when Cubey is at
+// the very top of the screen). The novice has no avatar, so their bubble sits
+// in the bottom-right corner of the screen. Each bubble stays up for a few
+// seconds depending on how long the message is.
 
 const SPEECH_CHARS_PER_LINE = 22;
 const SPEECH_PAD = 18;
 const SPEECH_LINE_HEIGHT = 36;
-let speechUntil = 0;
+const bubbles = {
+  expert: { g: null, tail: null, size: null, until: 0, seen: 0 },
+  novice: { g: null, tail: null, size: null, until: 0, seen: 0 },
+};
 
 function wrapText(text, width) {
   const lines = [];
@@ -512,14 +521,19 @@ function wrapText(text, width) {
   return lines;
 }
 
-function showSpeech(text) {
-  const g = avatar.speech;
+function showSpeech(role, text) {
+  const b = bubbles[role];
+  const g = b.g;
   g.replaceChildren();
-  avatar.speechTail = svg("path", {}, g);
+  b.tail = svg("path", {}, g);
   const box = svg("rect", { rx: 18 }, g);
   const label = svg("text", {}, g);
-  wrapText(text, SPEECH_CHARS_PER_LINE).forEach((line, i) => {
+  // The novice's bubble isn't attached to anyone, so it says who is talking
+  const lines = wrapText(text, SPEECH_CHARS_PER_LINE);
+  if (role === "novice") lines.unshift("Novice:");
+  lines.forEach((line, i) => {
     const t = svg("tspan", { x: SPEECH_PAD, y: SPEECH_PAD + 26 + i * SPEECH_LINE_HEIGHT }, label);
+    if (role === "novice" && i === 0) t.setAttribute("class", "speaker");
     t.textContent = line;
   });
   g.style.display = ""; // must be visible to measure the text
@@ -527,18 +541,26 @@ function showSpeech(text) {
   const h = label.getBBox().height + SPEECH_PAD * 2;
   box.setAttribute("width", w);
   box.setAttribute("height", h);
-  avatar.speechSize = { w, h };
-  speechUntil = performance.now() + 4000 + text.length * 60;
+  b.size = { w, h };
+  b.until = performance.now() + 4000 + text.length * 60;
+
+  if (role === "novice") {
+    g.setAttribute("transform", `translate(${SCREEN_W - w - 24} ${SCREEN_H - h - 24})`);
+  }
 }
 
 function placeSpeech(x, y, emotion, now) {
-  const g = avatar.speech;
-  const visible = now < speechUntil;
+  const novice = bubbles.novice;
+  if (novice.g) novice.g.style.display = now < novice.until ? "" : "none";
+
+  const b = bubbles.expert;
+  const g = b.g;
+  const visible = now < b.until;
   g.style.display = visible ? "" : "none";
   if (!visible) return;
 
   // Centred above Cubey's head (and above the emotion symbol), kept on screen
-  const { w, h } = avatar.speechSize;
+  const { w, h } = b.size;
   const tail = 22;
   // Right above Cubey's head, or higher to clear the ♪ / ? / !! symbol when showing an emotion
   const bottom = y - (emotion === "neutral" ? 140 : 200) * AVATAR_SCALE;
@@ -547,12 +569,33 @@ function placeSpeech(x, y, emotion, now) {
   if (bottom - tail - h >= 8) {
     // Above, with the tail pointing down at Cubey
     g.setAttribute("transform", `translate(${left} ${bottom - tail - h})`);
-    avatar.speechTail.setAttribute("d", `M ${tx - 14} ${h - 2} L ${tx} ${h + tail} L ${tx + 14} ${h - 2} Z`);
+    b.tail.setAttribute("d", `M ${tx - 14} ${h - 2} L ${tx} ${h + tail} L ${tx + 14} ${h - 2} Z`);
   } else {
     // No room at the top of the screen: go under Cubey's feet instead
     g.setAttribute("transform", `translate(${left} ${y + tail + 6})`);
-    avatar.speechTail.setAttribute("d", `M ${tx - 14} 2 L ${tx} ${-tail} L ${tx + 14} 2 Z`);
+    b.tail.setAttribute("d", `M ${tx - 14} 2 L ${tx} ${-tail} L ${tx + 14} 2 Z`);
   }
+}
+
+// ---- Chat (both roles) -------------------------------------------------------
+
+const chatInput = document.getElementById("chat-input");
+
+function setUpChat() {
+  document.getElementById("chat").hidden = false;
+  chatInput.placeholder = myRole === "expert" ? "Say something through Cubey…" : "Type a message to your expert…";
+  window.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" && e.target !== chatInput) {
+      e.preventDefault();
+      chatInput.focus(); // jump to the message box
+    }
+  });
+  document.getElementById("chat").addEventListener("submit", (e) => {
+    e.preventDefault();
+    doAction("say", { text: chatInput.value });
+    chatInput.value = "";
+    chatInput.blur(); // back to the screen (for the expert: walking with WASD) straight away
+  });
 }
 
 function setLine(el, x1, y1, x2, y2) {
@@ -573,7 +616,6 @@ const MOVE_KEYS = {
 };
 const EMOTION_KEYS = { 1: "happy", 2: "puzzled", 3: "panicked" };
 const held = new Set();
-const chatInput = document.getElementById("chat-input");
 let pending = { dx: 0, dy: 0 };
 let lastSent = 0;
 
@@ -586,19 +628,9 @@ function setUpExpertControls() {
       e.preventDefault(); // stop arrow keys from scrolling the page
     } else if (EMOTION_KEYS[key] && !e.repeat) {
       doAction("set_emotion", { emotion: EMOTION_KEYS[key] });
-    } else if (key === "enter") {
-      e.preventDefault();
-      chatInput.focus(); // jump to the message box
     }
   });
   window.addEventListener("keyup", (e) => held.delete(e.key.toLowerCase()));
-
-  document.getElementById("chat").addEventListener("submit", (e) => {
-    e.preventDefault();
-    doAction("say", { text: chatInput.value });
-    chatInput.value = "";
-    chatInput.blur(); // back to walking with WASD straight away
-  });
   window.addEventListener("blur", () => held.clear());
 
   overlay.addEventListener("mousedown", (e) => {
