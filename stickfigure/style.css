@@ -179,6 +179,26 @@ header {
   transform: translateX(-50%);
 }
 
+/* The novice's bubble: bottom-right corner, blue, no tail */
+.speech-wrap.novice-speech {
+  align-items: flex-end;
+}
+
+.novice-speech .speech {
+  border-color: #2a7fc0;
+  color: #0d3550;
+  margin-bottom: 0;
+}
+
+.novice-speech .speech::after {
+  display: none;
+}
+
+.novice-speech .speaker {
+  color: #2a7fc0;
+  font-size: 26px;
+}
+
 #say-form {
   margin: 10px 0 0;
 }

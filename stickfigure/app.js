@@ -26,7 +26,7 @@ const SCREEN_H = 1080;
 
 const PERMISSIONS = {
   expert: new Set(["move_avatar", "point_at", "highlight", "say"]),
-  novice: new Set(["press_ui_button"]),
+  novice: new Set(["press_ui_button", "say"]),
 };
 
 function can(role, action) {
@@ -67,7 +67,9 @@ let state = {
   avatar: { x: 1150, y: 980, dir: "down" }, // feet position in drawing pixels; dir = which way it last walked (up/down/left/right)
   pointer: null, // { x, y } the expert is pointing at, or null
   highlighted: null, // id of the hotspot the expert highlighted, or null
-  speech: null, // { text, n } what the stick figure last said; n counts up so the same words can be said twice
+  // Latest chat message from each person, as { text, n }; n counts up so the same words can be said twice.
+  // The expert talks through the stick figure; the novice's bubble sits in the bottom-right corner.
+  speech: { expert: null, novice: null },
   active: { tool: "tool_select", object: "Cube" },
   last_press: null, // { id, n } most recent novice click; n counts up so everyone can flash it
 };
@@ -104,7 +106,7 @@ const HANDLERS = {
   say(role, msg) {
     // Empty text clears the bubble.
     const text = String(msg.text ?? "").trim().slice(0, SPEECH_MAX);
-    state.speech = { text, n: (state.speech?.n ?? 0) + 1 };
+    state.speech[role] = { text, n: (state.speech[role]?.n ?? 0) + 1 };
   },
 
   press_ui_button(role, msg) {
@@ -272,7 +274,7 @@ function showWorkspace(code) {
   document.getElementById("help").textContent =
     myRole === "expert"
       ? "WASD / arrows: walk · Left-click: point / stop pointing · Right-click a button: highlight · Enter: talk"
-      : "Use the Blender screen like normal. Watch the stick figure for hints.";
+      : "Use the Blender screen like normal. Watch the stick figure for hints · Enter: talk";
 
   const layer = document.getElementById("hotspots");
   for (const h of HOTSPOTS) {
@@ -392,43 +394,62 @@ function buildAvatar() {
   avatar.pointLine = svg("line", { class: "pointer-line" }, pl);
   avatar.pointDot = svg("circle", { class: "pointer-dot", r: 10 }, pl);
 
-  // Speech bubble: HTML inside the SVG so the text wraps by itself. The box is
-  // much bigger than the bubble; the bubble sits at its bottom centre.
-  avatar.speech = svg("foreignObject", { width: SPEECH_BOX.w, height: SPEECH_BOX.h }, document.getElementById("speech-layer"));
-  const wrap = document.createElement("div");
-  wrap.className = "speech-wrap";
-  avatar.bubble = document.createElement("div");
-  avatar.bubble.className = "speech";
-  wrap.appendChild(avatar.bubble);
-  avatar.speech.appendChild(wrap);
-  avatar.speech.style.display = "none";
+  // Speech bubbles: HTML inside the SVG so the text wraps by itself. Each box is
+  // much bigger than its bubble. The expert's bubble sits at the bottom centre of
+  // its box, over the stick figure's head; the novice's sits in the bottom-right
+  // corner of the screen.
+  const speechLayer = document.getElementById("speech-layer");
+  for (const role of ["expert", "novice"]) {
+    const box = svg("foreignObject", { width: SPEECH_BOX.w, height: SPEECH_BOX.h }, speechLayer);
+    const wrap = document.createElement("div");
+    wrap.className = `speech-wrap ${role}-speech`;
+    const bubble = document.createElement("div");
+    bubble.className = "speech";
+    wrap.appendChild(bubble);
+    box.appendChild(wrap);
+    box.style.display = "none";
+    speech[role] = { box, bubble, seen: 0, until: 0 };
+  }
+  // The novice's bubble isn't attached to anyone, so it says who is talking
+  speech.novice.box.setAttribute("x", SCREEN_W - SPEECH_BOX.w - 24);
+  speech.novice.box.setAttribute("y", SCREEN_H - SPEECH_BOX.h - 24);
 }
 
-// The bubble shows for a few seconds, longer for longer messages. Each
+// A bubble shows for a few seconds, longer for longer messages. Each
 // browser times it from when it first sees the message.
 const SPEECH_BOX = { w: 640, h: 400 };
 const HEAD_TOP = 4; // top of the head in sprite pixels
-let speechSeen = 0;
-let speechUntil = 0;
+const speech = {};
 
 function updateSpeech(now, x, y) {
-  const sp = state.speech;
-  if (sp && sp.n !== speechSeen) {
-    speechSeen = sp.n;
-    avatar.bubble.textContent = sp.text;
-    speechUntil = sp.text ? now + Math.min(12000, 4000 + sp.text.length * 60) : 0;
+  for (const role of ["expert", "novice"]) {
+    const sp = state.speech[role];
+    const s = speech[role];
+    if (sp && sp.n !== s.seen) {
+      s.seen = sp.n;
+      s.bubble.replaceChildren();
+      if (role === "novice") {
+        const who = document.createElement("span");
+        who.className = "speaker";
+        who.textContent = "Novice:";
+        s.bubble.append(who, " ");
+      }
+      s.bubble.append(sp.text);
+      s.until = sp.text ? now + Math.min(12000, 4000 + sp.text.length * 60) : 0;
+    }
+    s.box.style.display = now < s.until ? "" : "none";
   }
-  const on = now < speechUntil;
-  avatar.speech.style.display = on ? "" : "none";
-  if (!on) return;
+
+  const e = speech.expert;
+  if (now >= e.until) return;
   // Just above the head, kept on screen at the edges
   const headY = y + (HEAD_TOP - FEET.y) * FIGURE_SCALE;
   // Slide the bubble in from the screen edges, and keep its tail pointing at the head
-  const b = avatar.bubble;
+  const b = e.bubble;
   const left = x - SPEECH_BOX.w / 2 + b.offsetLeft; // where the bubble's left edge would be, centred on the head
   const shift = Math.max(0, -left) - Math.max(0, left + b.offsetWidth - SCREEN_W);
-  avatar.speech.setAttribute("x", x - SPEECH_BOX.w / 2 + shift);
-  avatar.speech.setAttribute("y", headY - 10 - SPEECH_BOX.h);
+  e.box.setAttribute("x", x - SPEECH_BOX.w / 2 + shift);
+  e.box.setAttribute("y", headY - 10 - SPEECH_BOX.h);
   b.style.setProperty("--tail-x", `${clamp(x - left - shift, 30, b.offsetWidth - 30)}px`);
 }
 
@@ -538,21 +559,36 @@ const held = new Set();
 let pending = { dx: 0, dy: 0 };
 let lastSent = 0;
 
-function setUpExpertControls() {
+// ---- Chat (both roles) -------------------------------------------------------
+// Enter jumps into the message box; Enter again sends and leaves it.
+
+const sayInput = document.getElementById("say-input");
+
+function setUpChat() {
   const sayForm = document.getElementById("say-form");
-  const sayInput = document.getElementById("say-input");
   sayForm.hidden = false;
+  sayInput.placeholder = myRole === "expert" ? "Say something through the stick figure…" : "Type a message to your expert…";
   sayForm.addEventListener("submit", (e) => {
     e.preventDefault();
     doAction("say", { text: sayInput.value });
     sayInput.value = "";
-    sayInput.blur(); // back to walking with WASD straight away
+    sayInput.blur(); // back to the screen (for the expert: walking with WASD) straight away
   });
   // Typing in the box shouldn't walk the stick figure. Escape leaves the box.
   sayInput.addEventListener("keydown", (e) => {
     e.stopPropagation();
     if (e.key === "Escape") sayInput.blur();
   });
+  window.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      sayInput.focus(); // jump to the message box
+    }
+  });
+}
+
+function setUpExpertControls() {
+  setUpChat();
   sayInput.addEventListener("focus", () => held.clear());
 
   window.addEventListener("keydown", (e) => {
@@ -560,9 +596,6 @@ function setUpExpertControls() {
     if (MOVE_KEYS[key]) {
       held.add(key);
       e.preventDefault(); // stop arrow keys from scrolling the page
-    } else if (key === "enter") {
-      e.preventDefault();
-      sayInput.focus(); // jump to the message box
     }
   });
   window.addEventListener("keyup", (e) => held.delete(e.key.toLowerCase()));
@@ -603,6 +636,7 @@ function sendHeldKeys(dt, now) {
 // ---- Novice controls -------------------------------------------------------
 
 function setUpNoviceControls() {
+  setUpChat();
   overlay.addEventListener("click", (e) => {
     const id = e.target.dataset?.id;
     if (id) doAction("press_ui_button", { button_id: id });
