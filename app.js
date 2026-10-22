@@ -482,15 +482,15 @@ function animate(now) {
   }
   avatar.bubble.textContent = BUBBLES[a.emotion];
   avatar.bubble.setAttribute("class", `bubble ${a.emotion}`);
-  placeSpeech(shown.x + dx, shown.y + dy, f, now);
+  placeSpeech(shown.x, shown.y, now); // ignores bounce/shake so the bubble stays steady
 
   requestAnimationFrame(animate);
 }
 
 // ---- Speech bubble ---------------------------------------------------------
-// Drawn beside Cubey's head on the side it is facing (like the sketch), and
-// flipped to the other side near the edge of the screen. It stays up for a
-// few seconds depending on how long the message is.
+// Drawn above Cubey's head so it doesn't jump around when Cubey turns (or
+// under its feet when Cubey is at the very top of the screen). It stays up
+// for a few seconds depending on how long the message is.
 
 const SPEECH_CHARS_PER_LINE = 22;
 const SPEECH_PAD = 18;
@@ -531,27 +531,27 @@ function showSpeech(text) {
   speechUntil = performance.now() + 4000 + text.length * 60;
 }
 
-function placeSpeech(x, y, facing, now) {
+function placeSpeech(x, y, now) {
   const g = avatar.speech;
   const visible = now < speechUntil;
   g.style.display = visible ? "" : "none";
   if (!visible) return;
 
+  // Centred above Cubey's head (and above the emotion symbol), kept on screen
   const { w, h } = avatar.speechSize;
-  const headY = y - 128 * AVATAR_SCALE; // middle of Cubey's head
-  const gap = 70 * AVATAR_SCALE; // from Cubey's centre to the bubble
-  let side = facing;
-  if (side > 0 && x + gap + w > SCREEN_W) side = -1;
-  if (side < 0 && x - gap - w < 0) side = 1;
-  const left = side > 0 ? x + gap : x - gap - w;
-  const top = Math.max(8, headY - h / 2);
-  g.setAttribute("transform", `translate(${left} ${top})`);
-
-  // Tail from the bubble's inner edge back toward Cubey's head
-  const edge = side > 0 ? 0 : w;
-  const tip = side > 0 ? -gap + 42 * AVATAR_SCALE : w + gap - 42 * AVATAR_SCALE;
-  const midY = Math.min(h - 20, Math.max(20, headY - top));
-  avatar.speechTail.setAttribute("d", `M ${edge} ${midY - 14} L ${tip} ${midY + 6} L ${edge} ${midY + 14} Z`);
+  const tail = 22;
+  const bottom = y - 200 * AVATAR_SCALE; // just above the ♪ / ? / !! symbol
+  const left = Math.min(SCREEN_W - w - 8, Math.max(8, x - w / 2));
+  const tx = Math.min(w - 24, Math.max(24, x - left));
+  if (bottom - tail - h >= 8) {
+    // Above, with the tail pointing down at Cubey
+    g.setAttribute("transform", `translate(${left} ${bottom - tail - h})`);
+    avatar.speechTail.setAttribute("d", `M ${tx - 14} ${h - 2} L ${tx} ${h + tail} L ${tx + 14} ${h - 2} Z`);
+  } else {
+    // No room at the top of the screen: go under Cubey's feet instead
+    g.setAttribute("transform", `translate(${left} ${y + tail + 6})`);
+    avatar.speechTail.setAttribute("d", `M ${tx - 14} 2 L ${tx} ${-tail} L ${tx + 14} 2 Z`);
+  }
 }
 
 function setLine(el, x1, y1, x2, y2) {
