@@ -16,7 +16,7 @@ novice can't end up in the same room by accident.
 | WASD or arrow keys | Turns into the walking pose for that direction and walks. Turns back to standing when you let go |
 | Left-click anywhere | Points at that spot with the nearer arm (dashed line + ping). Left-click again to stop pointing |
 | Right-click a button | Highlights it with a yellow glow. Right-click it again, or empty space, to clear |
-| Type in the box under the screen + Enter | The stick figure says it in a speech bubble, which both people see. It fades after 4 to 12 seconds depending on length. Sending an empty box clears it |
+| Enter, type, Enter (or click the box under the screen) | The stick figure says it in a speech bubble, which both people see. It fades after 4 to 12 seconds depending on length. Sending an empty box clears it. Sending also leaves the box, so WASD walks again |
 
 Novice controls, the RBAC table, and how the connection works are the same as in
 the [main README](../README.md), except `set_emotion` is gone and there is a
