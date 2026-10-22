@@ -10,9 +10,9 @@ buttons are stubbed out with pseudocode.
 ## How to use it
 
 1. The expert opens the site and clicks **I'm the Expert**. A 4-letter room code
-   and a share link appear.
-2. The novice opens the share link (or opens the site and types the code) and
-   clicks **I'm the Novice**.
+   appears at the top of the page.
+2. The expert tells the novice the code. The novice opens the site, types the
+   code, and clicks **I'm the Novice**.
 3. Either person presses **Toggle LED**, and the light changes on both screens.
 
 It works across two tabs, two laptops, or two people in different places. The

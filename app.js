@@ -90,10 +90,6 @@ function startAsExpert(code = randomCode()) {
 
   peer.on("open", () => {
     showWorkspace(code);
-    const link = `${location.origin}${location.pathname}?room=${code}`;
-    document.getElementById("share").hidden = false;
-    document.getElementById("share-link").textContent = link;
-    document.getElementById("share-link").href = link;
     setUpExpertControls();
     broadcastState();
   });
