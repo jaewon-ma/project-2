@@ -9,6 +9,14 @@ can walk, point, and highlight.
 The two apps use different room codes, so a stick figure expert and a Cubey
 novice can't end up in the same room by accident.
 
+## Chat (both people)
+
+Both the expert and the novice have a message box under the screen. Press Enter
+to jump into it, type, and press Enter again to send and leave the box. The
+expert's message comes out of the stick figure in a speech bubble; the novice's
+shows in a blue "Novice:" bubble in the bottom-right corner. Both people see both
+bubbles. Each fades after 4 to 12 seconds depending on length.
+
 ## Expert controls
 
 | Input | What the stick figure does |
@@ -19,8 +27,8 @@ novice can't end up in the same room by accident.
 | Enter, type, Enter (or click the box under the screen) | The stick figure says it in a speech bubble, which both people see. It fades after 4 to 12 seconds depending on length. Sending an empty box clears it. Sending also leaves the box, so WASD walks again |
 
 Novice controls, the RBAC table, and how the connection works are the same as in
-the [main README](../README.md), except `set_emotion` is gone and there is a
-`say` action that only the expert is allowed to do.
+the [main README](../README.md), except `set_emotion` is gone and both roles are
+allowed to `say`. The novice still can't move, point, or highlight.
 
 ## The animations
 
