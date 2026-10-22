@@ -144,6 +144,51 @@ header {
   stroke-linecap: round;
 }
 
+/* Speech bubble over the stick figure. Sizes are in drawing pixels, since it
+   lives inside the 1920x1080 SVG and scales with it. */
+.speech-wrap {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.speech {
+  position: relative;
+  max-width: 480px;
+  padding: 16px 24px;
+  border: 4px solid #1e1e1e;
+  border-radius: 28px;
+  background: #fff;
+  color: #1e1e1e;
+  font: 600 32px/1.25 system-ui, sans-serif;
+  overflow-wrap: anywhere;
+  margin-bottom: 22px;
+}
+
+/* The tail, pointing down at the head */
+.speech::after {
+  content: "";
+  position: absolute;
+  bottom: -22px;
+  left: var(--tail-x, 50%);
+  border: 14px solid transparent;
+  border-top: 22px solid #1e1e1e;
+  transform: translateX(-50%);
+}
+
+#say-form {
+  margin: 10px 0 0;
+}
+
+#say-input {
+  width: min(28em, 60vw);
+  text-transform: none;
+  text-align: left;
+}
+
 #help {
   color: #aaa;
   margin: 10px 0 0;
