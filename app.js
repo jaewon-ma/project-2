@@ -482,7 +482,7 @@ function animate(now) {
   }
   avatar.bubble.textContent = BUBBLES[a.emotion];
   avatar.bubble.setAttribute("class", `bubble ${a.emotion}`);
-  placeSpeech(shown.x, shown.y, now); // ignores bounce/shake so the bubble stays steady
+  placeSpeech(shown.x, shown.y, a.emotion, now); // ignores bounce/shake so the bubble stays steady
 
   requestAnimationFrame(animate);
 }
@@ -531,7 +531,7 @@ function showSpeech(text) {
   speechUntil = performance.now() + 4000 + text.length * 60;
 }
 
-function placeSpeech(x, y, now) {
+function placeSpeech(x, y, emotion, now) {
   const g = avatar.speech;
   const visible = now < speechUntil;
   g.style.display = visible ? "" : "none";
@@ -540,7 +540,8 @@ function placeSpeech(x, y, now) {
   // Centred above Cubey's head (and above the emotion symbol), kept on screen
   const { w, h } = avatar.speechSize;
   const tail = 22;
-  const bottom = y - 200 * AVATAR_SCALE; // just above the ♪ / ? / !! symbol
+  // Right above Cubey's head, or higher to clear the ♪ / ? / !! symbol when showing an emotion
+  const bottom = y - (emotion === "neutral" ? 140 : 200) * AVATAR_SCALE;
   const left = Math.min(SCREEN_W - w - 8, Math.max(8, x - w / 2));
   const tx = Math.min(w - 24, Math.max(24, x - left));
   if (bottom - tail - h >= 8) {
