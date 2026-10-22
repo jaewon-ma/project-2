@@ -1,0 +1,160 @@
+body {
+  font-family: system-ui, sans-serif;
+  background: #1e1e1e;
+  color: #eee;
+  margin: 0;
+  padding: 12px 16px;
+  text-align: center;
+}
+
+button {
+  font-size: 1rem;
+  padding: 10px 20px;
+  margin: 6px;
+  border: none;
+  border-radius: 6px;
+  background: #e87d0d; /* Blender orange */
+  color: white;
+  cursor: pointer;
+}
+
+input {
+  font-size: 1rem;
+  padding: 9px;
+  width: 7em;
+  text-transform: uppercase;
+  text-align: center;
+  border-radius: 6px;
+  border: 1px solid #555;
+  background: #111;
+  color: #eee;
+}
+
+.card {
+  display: inline-block;
+  vertical-align: top;
+  width: 240px;
+  margin: 12px;
+  padding: 16px;
+  border: 1px solid #444;
+  border-radius: 8px;
+  background: #2b2b2b;
+}
+
+header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: space-between;
+  max-width: 600px;
+  margin: 0 auto 10px;
+}
+
+#stage {
+  /* As big as fits on screen while keeping the drawing's 16:9 shape */
+  width: min(100%, calc((100vh - 150px) * 16 / 9));
+  aspect-ratio: 16 / 9;
+  margin: 0 auto;
+  background: url("assets/blender-background.png") center / cover no-repeat;
+  border: 1px solid #444;
+  user-select: none;
+}
+
+#overlay {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.expert #overlay {
+  cursor: crosshair;
+}
+
+/* Clickable regions of the fake screen. Invisible until hovered (novice)
+   or until they are the active tool/object/workspace. */
+.hotspot {
+  fill: transparent;
+  stroke: transparent;
+  stroke-width: 3;
+  rx: 6;
+}
+
+.novice .hotspot {
+  cursor: pointer;
+}
+
+.novice .hotspot:hover {
+  fill: rgba(255, 255, 255, 0.08);
+  stroke: rgba(255, 255, 255, 0.35);
+}
+
+.hotspot.active {
+  stroke: #4aa3df;
+}
+
+.hotspot.pressed {
+  animation: press 0.5s ease-out;
+}
+
+@keyframes press {
+  from { fill: rgba(232, 125, 13, 0.55); }
+  to   { fill: transparent; }
+}
+
+/* Right-click highlight from the expert */
+.highlight {
+  fill: rgba(255, 213, 0, 0.12);
+  stroke: #ffd500;
+  stroke-width: 6;
+  rx: 10;
+  animation: glow 1s ease-in-out infinite alternate;
+}
+
+@keyframes glow {
+  from { stroke-opacity: 1; filter: drop-shadow(0 0 4px #ffd500); }
+  to   { stroke-opacity: 0.4; filter: drop-shadow(0 0 14px #ffd500); }
+}
+
+/* Left-click pointing target */
+.pointer-line {
+  stroke: #ff5577;
+  stroke-width: 3;
+  stroke-dasharray: 10 8;
+}
+
+.pointer-dot {
+  fill: none;
+  stroke: #ff5577;
+  stroke-width: 4;
+  animation: ping 1s ease-out infinite;
+}
+
+@keyframes ping {
+  from { r: 8; stroke-opacity: 1; }
+  to   { r: 30; stroke-opacity: 0; }
+}
+
+#highlight-layer, #pointer-layer, #avatar-layer {
+  pointer-events: none; /* clicks go through to the buttons underneath */
+}
+
+/* The stick figure's pointing arm, matching the blue of the drawing */
+.avatar .arm {
+  stroke: #0e6ffc;
+  stroke-linecap: round;
+}
+
+#help {
+  color: #aaa;
+  margin: 10px 0 0;
+}
+
+#activity {
+  min-height: 1.2em;
+  margin: 4px 0 0;
+}
+
+.error {
+  color: #ff8080;
+  min-height: 1.2em;
+}
