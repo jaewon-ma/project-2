@@ -271,7 +271,7 @@ function showWorkspace(code) {
   document.getElementById("workspace").hidden = false;
   document.getElementById("help").textContent =
     myRole === "expert"
-      ? "WASD / arrows: walk · Left-click: point / stop pointing · Right-click a button: highlight · Type below and press Enter to speak"
+      ? "WASD / arrows: walk · Left-click: point / stop pointing · Right-click a button: highlight · Enter: talk"
       : "Use the Blender screen like normal. Watch the stick figure for hints.";
 
   const layer = document.getElementById("hotspots");
@@ -546,6 +546,7 @@ function setUpExpertControls() {
     e.preventDefault();
     doAction("say", { text: sayInput.value });
     sayInput.value = "";
+    sayInput.blur(); // back to walking with WASD straight away
   });
   // Typing in the box shouldn't walk the stick figure. Escape leaves the box.
   sayInput.addEventListener("keydown", (e) => {
@@ -559,6 +560,9 @@ function setUpExpertControls() {
     if (MOVE_KEYS[key]) {
       held.add(key);
       e.preventDefault(); // stop arrow keys from scrolling the page
+    } else if (key === "enter") {
+      e.preventDefault();
+      sayInput.focus(); // jump to the message box
     }
   });
   window.addEventListener("keyup", (e) => held.delete(e.key.toLowerCase()));
