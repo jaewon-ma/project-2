@@ -3,7 +3,7 @@ body {
   background: #1e1e1e;
   color: #eee;
   margin: 0;
-  padding: 24px;
+  padding: 24px 16px;
   text-align: center;
 }
 
@@ -18,17 +18,48 @@ button {
   cursor: pointer;
 }
 
+input {
+  font-size: 1rem;
+  padding: 9px;
+  width: 7em;
+  text-transform: uppercase;
+  text-align: center;
+  border-radius: 6px;
+  border: 1px solid #555;
+  background: #111;
+  color: #eee;
+}
+
+.card {
+  display: inline-block;
+  vertical-align: top;
+  width: 240px;
+  margin: 12px;
+  padding: 16px;
+  border: 1px solid #444;
+  border-radius: 8px;
+  background: #2b2b2b;
+}
+
 header {
   display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
   justify-content: space-between;
   max-width: 600px;
-  margin: 0 auto 24px;
+  margin: 0 auto 16px;
+}
+
+a {
+  color: #f5a54a;
+  word-break: break-all;
 }
 
 #stage {
   max-width: 600px;
-  margin: 0 auto;
+  margin: 16px auto 0;
   padding: 32px;
+  box-sizing: border-box;
   border: 1px solid #444;
   border-radius: 8px;
   background: #2b2b2b;
@@ -48,7 +79,7 @@ header {
   box-shadow: 0 0 30px 10px rgba(255, 50, 50, 0.6);
 }
 
-#error {
+.error {
   color: #ff8080;
   min-height: 1.2em;
 }

@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Expertise Sharing Prototype</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Step 1: pick a role. The expert creates a room, the novice joins it. -->
+  <section id="role-picker">
+    <h1>Expertise Sharing</h1>
+    <div class="card">
+      <h2>Expert</h2>
+      <p>Start a session and share the room code.</p>
+      <button id="expert-button">I'm the Expert</button>
+    </div>
+    <div class="card">
+      <h2>Novice</h2>
+      <p>Enter the code your expert gives you.</p>
+      <input id="room-input" placeholder="Room code" maxlength="4" autocomplete="off">
+      <button id="novice-button">I'm the Novice</button>
+    </div>
+    <p id="picker-error" class="error"></p>
+  </section>
+
+  <!-- Step 2: the shared workspace -->
+  <section id="workspace" hidden>
+    <header>
+      <span>You are the <strong id="my-role"></strong></span>
+      <span>Room <strong id="room-code"></strong></span>
+      <span id="online"></span>
+    </header>
+    <p id="share" hidden>Send the novice this link: <a id="share-link"></a></p>
+
+    <!-- Later: the fake Blender image goes here, with the expert's stick
+         figure and the novice's clickable buttons drawn on top of it. -->
+    <div id="stage">
+      <div id="led"></div>
+      <button id="led-button">Toggle LED</button>
+      <p id="last-changed"></p>
+    </div>
+
+    <p id="error" class="error"></p>
+  </section>
+
+  <script src="https://cdn.jsdelivr.net/npm/peerjs@1.5.4/dist/peerjs.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
