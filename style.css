@@ -215,6 +215,20 @@ header {
   fill: #2b0a4f;
 }
 
+/* The novice's bubble, in the bottom-right corner */
+.novice-speech rect {
+  stroke: #2a7fc0;
+}
+
+.novice-speech text {
+  fill: #0d3550;
+}
+
+.novice-speech .speaker {
+  font-size: 24px;
+  fill: #2a7fc0;
+}
+
 #help {
   color: #aaa;
   margin: 10px 0 0;

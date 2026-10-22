@@ -31,6 +31,10 @@ concept: the **Select**, **Move**, and **Rotate** tools; the **Add** menu; **Cam
 **Cube**, and **Light** in the outliner; and the **cube** in the 3D view. Clicked
 buttons flash on both screens, and the selected tool and object get a blue outline.
 
+The novice can also chat back with the same message box (Enter to jump to it, Enter
+to send). Their message appears in a blue bubble in the bottom-right corner of the
+screen, which both users see.
+
 It works across two tabs, two laptops, or two people in different places. The
 expert's tab has to stay open, because it holds the session. If the expert
 closes it, the novice sees "The expert left".
@@ -65,7 +69,7 @@ WebRTC library loaded from a CDN.
   | `point_at`        |   ✓    |        |
   | `highlight`       |   ✓    |        |
   | `set_emotion`     |   ✓    |        |
-  | `say`             |   ✓    |        |
+  | `say`             |   ✓    |   ✓    |
   | `press_ui_button` |        |   ✓    |
 
   There is no login. Each user just says which role they are when they join.
