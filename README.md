@@ -20,8 +20,8 @@ buttons, and shows emotions.
 
 | Input | What Cubey does |
 |-------|-----------------|
-| WASD or arrow keys | Walks around the screen |
-| Left-click anywhere | Points at that spot (dashed line + ping). Esc stops pointing |
+| WASD or arrow keys | Walks around the screen, turning to face left or right |
+| Left-click anywhere | Points at that spot (dashed line + ping). Left-click again to stop pointing |
 | Right-click a button | Highlights it with a yellow glow. Right-click it again, or empty space, to clear |
 | `1` / `2` / `3` | Happy / puzzled / panicked. Press the same key again to go back to neutral |
 
