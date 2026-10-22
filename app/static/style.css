@@ -1,0 +1,54 @@
+body {
+  font-family: system-ui, sans-serif;
+  background: #1e1e1e;
+  color: #eee;
+  margin: 0;
+  padding: 24px;
+  text-align: center;
+}
+
+button {
+  font-size: 1rem;
+  padding: 10px 20px;
+  margin: 6px;
+  border: none;
+  border-radius: 6px;
+  background: #e87d0d; /* Blender orange */
+  color: white;
+  cursor: pointer;
+}
+
+header {
+  display: flex;
+  justify-content: space-between;
+  max-width: 600px;
+  margin: 0 auto 24px;
+}
+
+#stage {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 32px;
+  border: 1px solid #444;
+  border-radius: 8px;
+  background: #2b2b2b;
+}
+
+#led {
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 20px;
+  border-radius: 50%;
+  background: #400;
+  transition: background 0.15s, box-shadow 0.15s;
+}
+
+#led.on {
+  background: #f33;
+  box-shadow: 0 0 30px 10px rgba(255, 50, 50, 0.6);
+}
+
+#error {
+  color: #ff8080;
+  min-height: 1.2em;
+}
