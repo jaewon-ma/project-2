@@ -24,7 +24,7 @@ buttons, shows emotions, and talks in speech bubbles.
 | Left-click anywhere | Points at that spot (dashed line + ping). Left-click again to stop pointing |
 | Right-click a button | Highlights it with a yellow glow. Right-click it again, or empty space, to clear |
 | `1` / `2` / `3` | Happy / puzzled / panicked. Press the same key again to go back to neutral |
-| Message box under the screen (Enter to jump to it) | Cubey says it in a speech bubble for a few seconds. Both users see it |
+| Message box under the screen (Enter to jump to it) | Cubey says it in a speech bubble above its head for a few seconds. Both users see it |
 
 **Novice controls:** click buttons on the screen. Only a few work, as a proof of
 concept: the **Select**, **Move**, and **Rotate** tools; the **Add** menu; **Camera**,
