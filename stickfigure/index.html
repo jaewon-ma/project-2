@@ -43,8 +43,15 @@
         <g id="highlight-layer"></g>
         <g id="pointer-layer"></g>
         <g id="avatar-layer"></g>
+        <g id="speech-layer"></g>
       </svg>
     </div>
+
+    <!-- Expert only: what they type pops up in a speech bubble over the stick figure -->
+    <form id="say-form" hidden>
+      <input id="say-input" placeholder="Say something to the novice…" maxlength="140" autocomplete="off">
+      <button type="submit">Say</button>
+    </form>
 
     <p id="help"></p>
     <p id="activity"></p>
