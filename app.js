@@ -64,7 +64,7 @@ function isActive(h) {
 const EMOTIONS = ["neutral", "happy", "puzzled", "panicked"];
 
 let state = {
-  avatar: { x: 1150, y: 980, emotion: "neutral" }, // Cubey's feet, in drawing pixels
+  avatar: { x: 1150, y: 980, emotion: "neutral", facing: 1 }, // feet position in drawing pixels; facing 1 = right, -1 = left
   pointer: null, // { x, y } the expert is pointing at, or null
   highlighted: null, // id of the hotspot the expert highlighted, or null
   active: { tool: "tool_select", object: "Cube" },
@@ -79,10 +79,12 @@ const HANDLERS = {
   move_avatar(role, msg) {
     state.avatar.x = clamp(state.avatar.x + clamp(msg.dx, -60, 60), 100, SCREEN_W - 100);
     state.avatar.y = clamp(state.avatar.y + clamp(msg.dy, -60, 60), 260, SCREEN_H - 5);
+    if (msg.dx) state.avatar.facing = Math.sign(msg.dx); // turn to face the way Cubey walks
   },
 
   point_at(role, msg) {
-    state.pointer = msg.clear ? null : { x: clamp(msg.x, 0, SCREEN_W), y: clamp(msg.y, 0, SCREEN_H) };
+    // Left-click points; the next left-click puts the arm back down.
+    state.pointer = state.pointer ? null : { x: clamp(msg.x, 0, SCREEN_W), y: clamp(msg.y, 0, SCREEN_H) };
   },
 
   highlight(role, msg) {
@@ -261,7 +263,7 @@ function showWorkspace(code) {
   document.getElementById("workspace").hidden = false;
   document.getElementById("help").textContent =
     myRole === "expert"
-      ? "WASD / arrows: walk · Left-click: point · Right-click a button: highlight · 1 happy · 2 puzzled · 3 panicked · Esc: stop pointing"
+      ? "WASD / arrows: walk · Left-click: point / stop pointing · Right-click a button: highlight · 1 happy · 2 puzzled · 3 panicked"
       : "Use the Blender screen like normal. Watch Cubey for hints.";
 
   const layer = document.getElementById("hotspots");
@@ -362,10 +364,11 @@ function buildAvatar() {
   const eyes = (g, big) => {
     const rx = big ? 7 : 5;
     const ry = big ? 9 : 7;
-    svg("ellipse", { class: "eye", cx: -11, cy: -90, rx, ry }, g);
-    svg("ellipse", { class: "eye", cx: 11, cy: -90, rx, ry }, g);
-    svg("circle", { class: "pupil", cx: -10, cy: -89, r: big ? 2 : 2.6 }, g);
-    svg("circle", { class: "pupil", cx: 12, cy: -89, r: big ? 2 : 2.6 }, g);
+    // Eyes sit a little to the right and look right; mirroring Cubey makes them look left.
+    svg("ellipse", { class: "eye", cx: -9, cy: -90, rx, ry }, g);
+    svg("ellipse", { class: "eye", cx: 13, cy: -90, rx, ry }, g);
+    svg("circle", { class: "pupil", cx: -6.5, cy: -89, r: big ? 2 : 2.6 }, g);
+    svg("circle", { class: "pupil", cx: 15.5, cy: -89, r: big ? 2 : 2.6 }, g);
   };
 
   let f = (avatar.faces.neutral = svg("g", { class: "face" }, avatar.body));
@@ -422,29 +425,32 @@ function animate(now) {
   if (a.emotion === "puzzled") tilt = -8;
   if (walking) dy -= Math.abs(Math.sin(t * 14)) * 5;
   avatar.root.setAttribute("transform", `translate(${shown.x + dx} ${shown.y + dy}) scale(${AVATAR_SCALE})`);
-  avatar.body.setAttribute("transform", `rotate(${tilt} 0 -40)`);
+  const f = a.facing ?? 1; // mirror Cubey to face left or right
+  avatar.body.setAttribute("transform", `scale(${f} 1) rotate(${tilt} 0 -40)`);
 
   // Legs step while walking
   const step = walking ? Math.sin(t * 14) * 7 : 0;
   avatar.legL.setAttribute("transform", `translate(0 ${Math.min(0, step)})`);
   avatar.legR.setAttribute("transform", `translate(0 ${Math.min(0, -step)})`);
 
-  // Arms: rest pose for the emotion, except the arm nearest the target points at it
+  // Arms: rest pose for the emotion, except the arm nearest the target points at it.
+  // Arm positions are in Cubey's own (unmirrored) coordinates, so on screen
+  // an x offset is multiplied by `f`.
   const pose = ARM_POSES[a.emotion];
   let handL = pose.l;
   let handR = pose.r;
   const p = state.pointer;
   if (p) {
-    const useRight = p.x >= shown.x;
-    const s = useRight ? SHOULDER_R : SHOULDER_L;
-    const sx = shown.x + s.x * AVATAR_SCALE;
+    const targetOnRight = p.x >= shown.x;
+    const s = (f * SHOULDER_R.x > 0) === targetOnRight ? SHOULDER_R : SHOULDER_L;
+    const sx = shown.x + f * s.x * AVATAR_SCALE;
     const sy = shown.y + s.y * AVATAR_SCALE;
     const ang = Math.atan2(p.y - sy, p.x - sx);
     const len = Math.min(POINT_LENGTH, Math.hypot(p.x - sx, p.y - sy) / AVATAR_SCALE);
-    const hand = { x: s.x + Math.cos(ang) * len, y: s.y + Math.sin(ang) * len };
-    if (useRight) handR = hand;
+    const hand = { x: s.x + f * Math.cos(ang) * len, y: s.y + Math.sin(ang) * len };
+    if (s === SHOULDER_R) handR = hand;
     else handL = hand;
-    const hx = shown.x + hand.x * AVATAR_SCALE;
+    const hx = shown.x + f * hand.x * AVATAR_SCALE;
     const hy = shown.y + hand.y * AVATAR_SCALE;
     setLine(avatar.pointLine, hx, hy, p.x, p.y);
     avatar.pointDot.setAttribute("cx", p.x);
@@ -493,8 +499,6 @@ function setUpExpertControls() {
       e.preventDefault(); // stop arrow keys from scrolling the page
     } else if (EMOTION_KEYS[key] && !e.repeat) {
       doAction("set_emotion", { emotion: EMOTION_KEYS[key] });
-    } else if (key === "escape") {
-      doAction("point_at", { clear: true });
     }
   });
   window.addEventListener("keyup", (e) => held.delete(e.key.toLowerCase()));
