@@ -131,14 +131,40 @@ function randomCode() {
   return code;
 }
 
+// How long to wait for each connection step before telling the user what went wrong.
+const CONNECT_TIMEOUT_MS = 15000;
+const SERVER_ERRORS = ["network", "server-error", "socket-error", "socket-closed"];
+const NO_SERVER = "Can't reach the PeerJS connection server. Check your internet and try again in a minute (the free server is sometimes down).";
+
 function startAsExpert(code = randomCode()) {
   myRole = "expert";
   peer = new Peer(ROOM_PREFIX + code, PEER_OPTIONS);
+  const thisPeer = peer;
+  let started = false;
+  const timer = setTimeout(() => {
+    if (peer !== thisPeer || started) return;
+    showPickerError(NO_SERVER);
+    thisPeer.destroy();
+  }, CONNECT_TIMEOUT_MS);
 
   peer.on("open", () => {
+    clearTimeout(timer);
+    showError("");
+    if (started) return; // "open" fires again after a reconnect
+    started = true;
+    showPickerError("");
     showWorkspace(code);
     setUpExpertControls();
     broadcastState();
+  });
+
+  // The link to the PeerJS server can drop (laptop sleep, Wi-Fi change). Novices
+  // already connected keep working, but new ones can't find the room until we
+  // reconnect, so do that right away.
+  peer.on("disconnected", () => {
+    if (thisPeer.destroyed) return;
+    showError("Lost the connection server, reconnecting… (the novice can't join until this clears)");
+    setTimeout(() => !thisPeer.destroyed && thisPeer.reconnect(), 1000);
   });
 
   peer.on("connection", (conn) => {
@@ -156,10 +182,15 @@ function startAsExpert(code = randomCode()) {
   });
 
   peer.on("error", (err) => {
-    if (err.type === "unavailable-id") {
+    if (err.type === "unavailable-id" && !started) {
+      clearTimeout(timer);
       peer.destroy(); // that room code is taken, try another one
       startAsExpert();
-    } else {
+    } else if (!started) {
+      clearTimeout(timer);
+      showPickerError(SERVER_ERRORS.includes(err.type) ? NO_SERVER : `Connection problem: ${err.type}. Try again.`);
+      thisPeer.destroy();
+    } else if (err.type !== "peer-unavailable") {
       showError(`Connection problem: ${err.type}`);
     }
   });
@@ -167,11 +198,37 @@ function startAsExpert(code = randomCode()) {
 
 function startAsNovice(code) {
   myRole = "novice";
+  peer?.destroy(); // clicking again while still connecting starts over
   peer = new Peer(PEER_OPTIONS);
+  const thisPeer = peer;
+  let timer;
+  let connected = false;
+  const giveUp = (text) => {
+    if (peer !== thisPeer || connected) return; // once joined, the direct link no longer needs the server
+    clearTimeout(timer);
+    showPickerError(text);
+    thisPeer.destroy();
+  };
+  timer = setTimeout(() => giveUp(NO_SERVER), CONNECT_TIMEOUT_MS);
 
   peer.on("open", () => {
+    // Step 2: the server knows us, now open the direct link to the expert.
+    clearTimeout(timer);
+    showPickerError(`Connecting to room ${code}…`);
+    timer = setTimeout(
+      () =>
+        giveUp(
+          `Found room ${code}, but couldn't open a direct connection to the expert. ` +
+            "Some networks (campus or work Wi-Fi) block this. Try both being on the same Wi-Fi or a phone hotspot, " +
+            "or have the expert reload and make a new room."
+        ),
+      CONNECT_TIMEOUT_MS
+    );
     hostConn = peer.connect(ROOM_PREFIX + code, { metadata: { role: "novice" }, reliable: true });
     hostConn.on("open", () => {
+      clearTimeout(timer);
+      connected = true;
+      showPickerError("");
       showWorkspace(code);
       setUpNoviceControls();
     });
@@ -184,10 +241,9 @@ function startAsNovice(code) {
 
   peer.on("error", (err) => {
     if (err.type === "peer-unavailable") {
-      showPickerError(`No expert is in room ${code}. Check the code and try again.`);
-      peer.destroy();
+      giveUp(`No expert is in room ${code}. Check the code, or have the expert reload and make a new room.`);
     } else {
-      showPickerError(`Connection problem: ${err.type}`);
+      giveUp(SERVER_ERRORS.includes(err.type) ? NO_SERVER : `Connection problem: ${err.type}. Try again.`);
     }
   });
 }

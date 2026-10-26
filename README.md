@@ -100,6 +100,27 @@ Add an entry to `HOTSPOTS` in `app.js` with the button's rectangle in drawing
 pixels (the image is 1920 x 1080). Give it a `group` if it should stay selected
 like a tool or object. Nothing else needs to change.
 
+## If the novice gets stuck on "Connecting"
+
+The page now gives up after 15 seconds and says which step failed:
+
+- **"Can't reach the PeerJS connection server"**: the free PeerJS server is down or
+  blocked on that network. Wait a minute and try again, or try another network.
+- **"No expert is in room ABCD"**: the code is wrong, or the expert's tab was closed
+  or reloaded. The expert gets a new code on every reload, so check the code at the
+  top of the expert's page.
+- **"Found room ABCD, but couldn't open a direct connection"**: the two browsers
+  found each other but the network blocked the direct link. This is common on campus
+  or work Wi-Fi. Put both devices on the same Wi-Fi, or use a phone hotspot.
+
+If the expert's laptop sleeps or changes Wi-Fi, the expert's page shows "Lost the
+connection server, reconnecting…" and reconnects by itself. A novice can join again
+once that message goes away.
+
+A quick check that the site itself is fine: open it in two tabs of the same browser
+on one computer and join as expert and novice. If that works, the problem is the
+network between the two devices.
+
 ## Known limits
 
 - The free PeerJS server is shared and occasionally slow or down. If connecting
